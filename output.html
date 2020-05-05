@@ -1,0 +1,372 @@
+<!DOCTYPE HTML><!-- HTML5 宣告 很重要別漏掉-->
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+        <script src="https://unpkg.com/vue/dist/vue.js"></script>
+        <style>
+            .category {
+                font-family: "微軟正黑體";
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container" >
+            <div class="row">
+                <div class="col">
+                    <canvas id="canvas1" width="600" height="1000" style="border:3px solid #D0D0D0;"></canvas>
+                </div>
+                <div class="category">
+                    <div class="col" >
+                            <h3 class="category"><b>製作模板</b></h3>
+                            <table class="table table-borderless">
+                                <tbody>
+                                <tr>                    
+                                    <td ><input type="checkbox" aria-label="Checkbox for following text input" id="public">&nbsp公開</input></td>
+                                </tr>
+                                <tr>
+                                    <td >選擇格式：&nbsp
+                                        <select id ="format">
+                                            <option value="" selected="true" disabled>請選擇</option>
+                                            <option value="picture">圖片</option>
+                                            <option value="text">文字</option>
+                                            <option value="material">素材</option>
+                                        </select>
+                                    </td>
+                                    <td><button type="button" id="add_component" class="btn btn-light">新增區域</button></td>
+                                </tr>
+                                <tr>
+                                    <table class="table table-borderless">
+                                        <tbody  id ="component_panel"></tbody>
+                                    </table>
+                                </tr>
+                                <tr>
+                                    <td><button type="button" id="add_keyword" class="btn btn-light">新增關鍵字</button></td>
+                                </tr>
+                                <tr>
+                                    <table class="table table-borderless">
+                                        <tbody  id ="keyword_panel"></tbody>
+                                    </table>
+                                </tr>
+                                <tr>
+                                    <td >額外文字訊息：&nbsp<textarea type="text" id="message" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"></textarea></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div>
+                                <button type="button"   id="submit" class="btn btn-light">送出模板</button><br>
+                                <form id="imgur">
+                                    <input type="file" class="imgur" accept="image/*" data-max-size="5000" />
+                                </form>
+                                
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <script type="text/javascript">
+            $(document).ready(function() {
+                       // 處理表單點擊事件
+                        $('#add_component').click(function() {
+                           add_component();
+                        });
+
+                       $('#submit').click(function() {
+                        submit();
+                        });
+
+                        $('#add_keyword').click(function() {
+                        add_keyword();
+                        });
+                        
+                        
+                   });
+   
+   
+            function submit(){
+                if (document.getElementById("public").checked) var public = "yes";
+                else var public = "no";
+                let keyword = keyword_json();
+                var message =  $('#message').val();
+                let component = component_json();
+
+                
+                
+                // 將資料組成JSON格式
+                var data_object = {
+                    "user_id": "123",
+                    "public":public,
+                    "keyword":[
+                        keyword
+                    ],
+                    "message": message,
+                    "component":[
+                        component
+                    ],
+                    "jpg":photo
+                    
+                    
+                };
+                    var data_string = JSON.stringify(data_object).replace(/\"/g,'');
+                    
+
+                alert(data_string);
+            }
+
+            let count_component = 0;
+            var Seq = new Array ();
+
+            function add_component(){
+                let inner_html = '';
+                var component_format = $('select[id=format]').val();
+
+                if(component_format=='picture'){
+                    Seq.push(0);
+                    inner_html += '<tr><td><b>區域：'+ component_name(count_component) + '</b></td><td ><input type="checkbox" id="edit_'+ count_component +'"'+' aria-label="Checkbox for following text input">&nbsp可編輯</input></td></tr>';
+                    inner_html += '<tr><td><button type="button" id="user_picture_'+count_component+'"'+' class="btn btn-light">上傳圖檔</button></td></tr>';
+                }
+
+
+                else if(component_format=='text'){
+                    Seq.push(1);
+                    inner_html += '<tr><td><b>區域：'+ component_name(count_component) + '</b></td><td ><input type="checkbox" id="edit_'+ count_component +'"'+'aria-label="Checkbox for following text input">&nbsp可編輯</input></td></tr>';
+                    inner_html += '<tr><td><textarea type="text" id="user_inputText_'+count_component+'"'+' class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"></textarea></td></tr>';
+                    inner_html += '<tr><td>字體大小：&nbsp<input type="text" id="size_'+count_component+'"'+' class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"></td></tr>';
+                    inner_html += '<tr><td>選擇字形：&nbsp<select id ="font_'+count_component+'"'+'><option value="" selected="true" disabled>請選擇</option>'
+                                            +'<option value="微軟正黑體">微軟正黑體</option>'
+                                            +'<option value="標楷體">標楷體</option>'
+                                            +'<option value="新細明體">新細明體</option>'
+                                            +'</select></td></tr>';
+                    inner_html += '<tr><td>字體顏色：&nbsp<select id ="color_'+count_component+'"'+'><option value="" selected="true" disabled>請選擇</option>'
+                                            +'<option value="red">紅色</option>'
+                                            +'<option value="yellow">黃色</option>'
+                                            +'<option value="blue">藍色</option>'
+                                            +'</select></td></tr>';
+                    
+                                        
+                }
+
+                else if(component_format=='material'){
+                    Seq.push(2);
+                    inner_html += '<tr><td><b>區域：'+ component_name(count_component) + '</b></td><td ><input type="checkbox" id="edit_'+ count_component +'"'+' aria-label="Checkbox for following text input">&nbsp可編輯</input></td></tr>';
+                    inner_html += '<tr><td>選擇素材：&nbsp<select id ="user_material_'+count_component+'"'+'><option value="" selected="true" disabled>請選擇</option>'
+                                            +'<option value="0">靜思語</option>'
+                                            +'<option value="1">笑話</option>'
+                                            +'<option value="2">名言錦句</option>'
+                                            +'</select></td></tr>';
+                    inner_html += '<tr><td>字體大小：&nbsp<input type="text" id="size_'+count_component+'"'+' class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"></td></tr>';
+                    inner_html += '<tr><td>選擇字形：&nbsp<select id ="font_'+count_component+'"'+'><option value="" selected="true" disabled>請選擇</option>'
+                                            +'<option value="微軟正黑體">微軟正黑體</option>'
+                                            +'<option value="標楷體">標楷體</option>'
+                                            +'<option value="新細明體">新細明體</option>'
+                                            +'</select></td></tr>';
+                    inner_html += '<tr><td>字體顏色：&nbsp<select id ="color_'+count_component+'"'+'><option value="" selected="true" disabled>請選擇</option>'
+                                            +'<option value="red">紅色</option>'
+                                            +'<option value="yellow">黃色</option>'
+                                            +'<option value="blue">藍色</option>'
+                                            +'</select></td></tr>';
+                }
+            
+                
+                
+                $("#component_panel").append(inner_html);
+                count_component++;
+
+            }
+
+            function component_name(count_component){
+                let comment_name ='';
+                var A = new Array ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z' );
+                return A[count_component];
+            }
+
+            let count_keyword =0;
+            function add_keyword(){
+                
+                let keyword_html ='';
+                keyword_html += '<tr><td >關鍵字：&nbsp<input type="text" id="keyword_'+ count_keyword +'"'+' class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"></td></tr>';
+                $("#keyword_panel").append(keyword_html);
+                count_keyword ++
+                
+            }
+
+            function keyword_json(){
+                let keyword_json ='';
+                count_keyword =count_keyword-1;
+                for(var i=0;i<count_keyword;i++){
+                    keyword_json += $('#keyword_'+i).val()+',';
+                }
+                keyword_json += $('#keyword_'+count_keyword).val();
+                return keyword_json;
+
+            }
+
+
+            function component_json(){
+                let component_json ='';
+                count_component = count_component-1;
+                
+                for(var i=0;i<count_component;i++){
+                    component_json += component_json_switch(Seq[i],i);                    
+                    component_json += ','
+                }
+                component_json += component_json_switch(Seq[count_component],i);
+               
+                return component_json;
+
+            }
+
+            function component_json_switch(num,i){
+                let component_json ='';
+                switch(num){
+
+                        case 0 :
+                        var edit ='';
+                        if(document.getElementById("edit_"+i).checked)edit="yes";
+                        else edit="no";
+
+                        component_json += '{';
+                        component_json += 'edit:'+ edit +',';
+                        component_json += 'location:'+location_json_array[i]+','; 
+                        component_json += 'database : no,';
+                        component_json += 'content:圖片網址,';
+                        component_json += '}';
+                        break;
+
+
+
+                        case 1 :
+                        var edit ='';
+                        if(document.getElementById("edit_"+i).checked)edit="yes";
+                        else edit="no";
+
+                        component_json += '{';
+                        component_json += 'edit:'+ edit +',';
+                        component_json += 'location:'+location_json_array[i]+','; 
+                        component_json += 'database : no,';
+                        component_json += 'content:'+$('#user_inputText_'+i).val()+',';
+                        component_json += 'size:' + $('#size_'+i).val()+',';
+                        component_json += 'font:' + $('select[id=font_'+i+']').val()+',';
+                        component_json += 'color:' + $('select[id=color_'+i+']').val();
+                        component_json += '}';
+                        
+                        break;
+
+
+                        case 2 :
+                        var edit ='';
+                        if(document.getElementById("edit_"+i).checked)edit="yes";
+                        else edit="no";
+
+                        component_json += '{';
+                        component_json += 'edit:'+ edit+',';
+                        component_json += 'location:'+location_json_array[i]+','; 
+                        component_json += 'database: yes,';
+                        component_json += 'content:'+$('select[id=user_material_'+i+']').val()+',';
+                        component_json += 'size:' + $('#size_'+i).val()+',';
+                        component_json += 'font:' + $('select[id=font_'+i+']').val()+',';
+                        component_json += 'color:' + $('select[id=color_'+i+']').val();
+                        component_json += '}';
+                        break;
+                        
+                }
+             
+                return component_json;
+
+            }
+
+
+            var canvas = document.getElementById('canvas1'); // 得到画布
+            var ctx = canvas.getContext('2d'); // 得到画布的上下文对象
+            var flag = false;
+            var x = 0; // 鼠标开始移动的位置X
+            var y = 0; // 鼠标开始移动的位置Y
+            var url = ''; // canvas图片的二进制格式转为dataURL格式
+            var location_json_array = new Array();
+
+            /* 为canvas绑定mouse事件 */
+            $('canvas').mousedown(function(e){
+                flag = true;
+                x = e.offsetX; // 鼠标落下时的X
+                y = e.offsetY; // 鼠标落下时的Y
+            }).mouseup(function(e){
+                flag = false;
+                url = $('canvas')[0].toDataURL(); // 每次 mouseup 都保存一次画布状态
+                location_json_array.push(getLocation(x,y,e.offsetX-x,e.offsetY-y));
+            }).mousemove(function(e){
+                drawRect(e); // 绘制方法
+            });
+
+            function drawRect(e){
+                if(flag){
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                    ctx.beginPath();
+                    ctx.strokeRect(x,y,e.offsetX-x,e.offsetY-y);
+                    
+
+                }
+                loadImage();
+            }
+
+            function loadImage(){
+                var img = new Image();
+                img.src = url;
+                ctx.drawImage(img,0,0,canvas.width,canvas.height);
+            }
+
+            function getLocation(x,y,image_length,image_width){
+                let location ='';
+                location = '['+ x +',' + y +',' + image_length  +','+image_width + ']';
+                return location ;
+            }
+
+            var photo = new Array();
+
+            $('input[type=file]').on("change", function () {
+                var $files = $(this).get(0).files;
+
+                var formData = new FormData();
+                formData.append("image", $files[0]);
+
+                var apiKey = 'fa2968177d9b09b';
+                //formData.append("image","1458704253-3037926413_m.png");
+                $.ajax({
+                    url: "https://api.imgur.com/3/image",
+                    type: "POST",
+                    datatype: "json",
+                    headers: {
+                        "Authorization": "Client-ID " + apiKey
+                    },
+                    data: formData,
+                    success: function(response) {
+                    //console.log(response);
+                    photo.push(response.data.link);
+                    var photo_hash = response.data.deletehash;
+                    },
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                });
+
+
+
+            })
+
+            
+
+            
+            
+
+
+           </script>
+
+    </body>
+</html>
